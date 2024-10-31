@@ -36,3 +36,116 @@
     transform: rotate(360deg);
   }
 }
+
+.game-board-container {
+  text-align: center;
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);;
+  gap: 60px;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .game-board {
+    gap:10px; /* Smaller gap for mobile screens */
+  }
+}
+
+.game-button {
+  width: 28vw;
+  height: 28vw;
+  max-width: 160px;
+  max-height: 160px;
+  font-size: 2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #007BFF;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #FFF;
+  transition: background-color 0.2s ease;
+  background-color: #e0e0e0; /* Default for empty cells */
+}
+
+.game-button.X {
+  background-color: #FF6347; /* Color for "X" */
+}
+
+.game-button.O {
+  background-color: #4682B4; /* Color for "O" */
+}
+
+.alert-container {
+  padding: 1rem;
+  font-size: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.alert-win {
+  color: #28a745;
+  background-color: #d4edda;
+}
+
+.alert-tie {
+  color: #ffc107;
+  background-color: #fff3cd;
+}
+
+.alert-lose {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.turn-indicator {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.turn-indicator.X {
+  color: #FF6347;
+}
+
+.turn-indicator.O {
+  color: #4682B4;
+}
+
+.turn-status {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.turn-status.your-turn {
+  color: #28a745;
+}
+
+.turn-status.waiting {
+  color: #666;
+}
+
+
+
+
+
+

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { makeMove, getGame } from '../api/gameAPI';
-import { joinGameHelper } from '../middleware/joinGame';
+import React, { useState, useEffect, useRef } from "react";
+import { makeMove, getGame } from "../api/gameAPI";
+import { joinGameHelper } from "../middleware/joinGame";
+import "../App.css";
 
 interface GameBoardProps {
   gameId: string;
@@ -9,18 +10,26 @@ interface GameBoardProps {
   onUpdate: () => void;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ gameId, board, currentPlayer, onUpdate }) => {
+const GameBoard: React.FC<GameBoardProps> = ({
+  gameId,
+  board,
+  currentPlayer,
+  onUpdate,
+}) => {
   const [playerRole, setPlayerRole] = useState<string | null>(null); // "X" or "O"
   const [gameStatus, setGameStatus] = useState<string | null>(null); // "X wins", "O wins", "tie"
   const joinedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null); // Ref to play audio feedback
+  const [selectedCell, setSelectedCell] = useState<string | null>(null);
+  const announceTimeout = useRef<number | null>(null);
+  const [lastMove, setLastMove] = useState<string | null>(null);
 
   // Generate or retrieve player ID
   const [playerId] = useState<string>(() => {
-    let storedPlayerId = localStorage.getItem('playerId');
+    let storedPlayerId = localStorage.getItem("playerId");
     if (!storedPlayerId) {
       storedPlayerId = `player-${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('playerId', storedPlayerId);
+      localStorage.setItem("playerId", storedPlayerId);
     }
     return storedPlayerId;
   });
@@ -46,38 +55,41 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameId, board, currentPlayer, onU
   useEffect(() => {
     const intervalId = setInterval(async () => {
       const updatedGame = await getGame(gameId);
-      
+
       if (updatedGame) {
         // Update the game status if it has changed
         if (updatedGame.status !== gameStatus) {
           setGameStatus(updatedGame.status);
-        } 
+        }
         // Trigger onUpdate if the board has changed
         if (JSON.stringify(updatedGame.board) !== JSON.stringify(board)) {
           onUpdate();
-        }  
+        }
         // Stop polling if the game has ended
-        if (updatedGame.status !== 'ongoing') {
+        if (updatedGame.status !== "ongoing") {
           clearInterval(intervalId);
-          console.log("Polling stopped as the game has ended with status:", updatedGame.status);
+          console.log(
+            "Polling stopped as the game has ended with status:",
+            updatedGame.status
+          );
         }
       }
     }, 3000);
-  
+
     return () => clearInterval(intervalId); // Cleanup on unmount
   }, [gameId, board, gameStatus, onUpdate]);
 
   useEffect(() => {
     // Play sound and announce winner or tie when game ends
-    if (gameStatus && gameStatus !== 'ongoing') {
+    if (gameStatus && gameStatus !== "ongoing") {
       if (gameStatus === `${playerRole} wins`) {
-        audioRef.current = new Audio('/audio/win.mp3');
+        audioRef.current = new Audio("/audio/win.mp3");
         audioRef.current.play();
-      } else if (gameStatus === 'tie') {
-        audioRef.current = new Audio('/audio/tie.mp3');
+      } else if (gameStatus === "tie") {
+        audioRef.current = new Audio("/audio/tie.mp3");
         audioRef.current.play();
       } else {
-        audioRef.current = new Audio('/audio/lose.mp3');
+        audioRef.current = new Audio("/audio/lose.mp3");
         audioRef.current.play();
       }
     }
@@ -91,95 +103,127 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameId, board, currentPlayer, onU
     try {
       await makeMove(gameId, playerRole!, row, col);
       onUpdate();
+      setLastMove(`Row ${row + 1}, Column ${col + 1}`);
     } catch (error) {
-      console.error('Invalid move:', error);
+      console.error("Invalid move:", error);
     }
   };
 
+  const updateSelectedCell = (
+    rowIndex: number,
+    colIndex: number,
+    cell: string | null
+  ) => {
+    // Clear any existing timeouts to prevent stacking
+    if (announceTimeout.current) clearTimeout(announceTimeout.current);
+    const cellState = cell
+      ? cell === "X"
+        ? "Occupied by X"
+        : "Occupied by O"
+      : "Empty";
+    setSelectedCell(
+      `Row ${rowIndex + 1}, Column ${colIndex + 1}, ${cellState}`
+    );
+    announceTimeout.current = window.setTimeout(() => {
+      setSelectedCell(null); // Clear the announcement after a delay
+    }, 500); // Adjust delay as needed
+  };
+  useEffect(() => {
+    return () => {
+      if (announceTimeout.current) clearTimeout(announceTimeout.current); // Clean up on unmount
+    };
+  }, []);
+
   return (
-    <div style={{ textAlign: 'center', padding: '1rem', maxWidth: '600px', margin: 'auto' }}>
-      {/* Game result announcement */}
-      {gameStatus && gameStatus !== 'ongoing' && (
     <div
-      role="alert"
-      aria-live="assertive"
-      style={{
-        padding: '1rem',
-        fontSize: '1.5rem',
-        color: gameStatus === `${playerRole} wins` 
-          ? '#28a745' 
-          : gameStatus === 'tie' 
-          ? '#ffc107' 
-          : '#dc3545',
-        backgroundColor: gameStatus === `${playerRole} wins` 
-          ? '#d4edda' 
-          : gameStatus === 'tie' 
-          ? '#fff3cd' 
-          : '#f8d7da',
-        borderRadius: '8px',
-        marginBottom: '1rem',
-      }}          
+      className="game-board-container"
+      aria-label="Tic-Tac-Toe game board. The grid is a 3x3 layout with rows and columns. You are playing as X or O based on your role."
     >
-      {gameStatus === `${playerRole} wins` && "Congratulations! You win!"}
-      {gameStatus === 'tie' && "It's a tie!"}
-      {gameStatus === `${playerRole === 'X' ? 'O wins' : 'X wins'}` && "You lose. Better luck next time!"}
-    </div>
-)}
-  
+      <p style={{ fontSize: "1rem", color: "#555", marginBottom: "1rem" }}>
+        This is a 3x3 grid layout. Select an empty cell to make your move. Rows
+        and columns are numbered from top to bottom and left to right.
+      </p>
+      {/* Game result announcement */}
+      {gameStatus && gameStatus !== "ongoing" && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className={`alert-container ${
+            gameStatus === `${playerRole} wins`
+              ? "alert-win"
+              : gameStatus === "tie"
+              ? "alert-tie"
+              : "alert-lose"
+          }`}
+        >
+          {gameStatus === `${playerRole} wins` && "Congratulations! You win!"}
+          {gameStatus === "tie" && "It's a tie!"}
+          {gameStatus === `${playerRole === "X" ? "O wins" : "X wins"}` &&
+            "You lose. Better luck next time!"}
+        </div>
+      )}
+
       {/* Turn indicator */}
-      {(!gameStatus || gameStatus === 'ongoing') && (
+      {(!gameStatus || gameStatus === "ongoing") && (
         <>
-          <h2 style={{ fontSize: '1.5rem', color: '#333', fontWeight: 'bold' }}>
-            You are playing as <span style={{ color: playerRole === 'X' ? '#FF6347' : '#4682B4' }}>{playerRole}</span>
+          <h2 aria-live="polite" className={`turn-indicator ${playerRole}`}>
+            {`You are playing as ${playerRole}`}
           </h2>
-          <p style={{ fontSize: '1.1rem', color: '#666' }}>
-            {playerRole === currentPlayer ? "It's your turn!" : "Waiting for your opponent..."}
-          </p>
+
+          {/* Separate live regions for each message */}
+          {playerRole === currentPlayer ? (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="turn-status your-turn"
+              key="your-turn"
+            >
+              {lastMove
+                ? `Your opponent selected ${lastMove}. It's your turn!`
+                : "It's your turn!"}
+            </div>
+          ) : (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="turn-status waiting"
+              key="waiting"
+            >
+              {lastMove
+                ? `You selected ${lastMove}. Waiting for your opponent...`
+                : "Waiting for your opponent..."}
+            </div>
+          )}
         </>
       )}
-  
+
+      {/* Aria-live region for announcing the selected cell */}
+      <div aria-live="assertive" className="sr-only">
+        {selectedCell}
+      </div>
+
       {/* Game board */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 80px)',
-          gap: '10px',
-          justifyContent: 'center',
-          marginTop: '1rem',
-        }}
-      >
+      <div className="game-board">
         {board.map((row, rowIndex) =>
           row.map((cell, colIndex) => (
             <button
               key={`${rowIndex}-${colIndex}`}
               onClick={() => handleCellClick(rowIndex, colIndex)}
-              aria-label={`Cell at row ${rowIndex + 1}, column ${colIndex + 1}`}
-              style={{
-                width: '80px',
-                height: '80px',
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid #007BFF',
-                borderRadius: '8px',
-                backgroundColor: cell ? (cell === 'X' ? '#FF6347' : '#4682B4') : '#e0e0e0',
-                color: '#FFF',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-              }}
-              onFocus={(e) => (e.currentTarget.style.backgroundColor = '#333')}
-              onBlur={(e) => (e.currentTarget.style.backgroundColor = cell ? (cell === 'X' ? '#FF6347' : '#4682B4') : '#e0e0e0')}
+              onMouseEnter={() => updateSelectedCell(rowIndex, colIndex, cell)}
+              onFocus={() => updateSelectedCell(rowIndex, colIndex, cell)}
+              onMouseLeave={() => setSelectedCell("")}
+              onBlur={() => setSelectedCell("")}
+              className={`game-button ${
+                cell === "X" ? "X" : cell === "O" ? "O" : ""
+              }`}
             >
-              {cell || ''}
+              {cell || ""}
             </button>
           ))
         )}
       </div>
     </div>
   );
-  
 };
 
 export default GameBoard;

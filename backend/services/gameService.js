@@ -65,6 +65,12 @@ exports.joinGame = (gameId, playerId) => {
 
       const game = results[0];
 
+      // If the game is ongoing and both player slots are filled by other players, reject join
+      if (game.status === 'ongoing' && game.playerX && game.playerO && 
+          game.playerX !== playerId && game.playerO !== playerId) {
+        return resolve({ error: 'Game is already full and ongoing.' });
+      }
+
       // Check if the player is already in the game
       let role;
       if (game.playerX === playerId) {
@@ -96,6 +102,7 @@ exports.joinGame = (gameId, playerId) => {
     });
   });
 };
+
 
 
 exports.makeMove = (gameId, player, row, col) => {

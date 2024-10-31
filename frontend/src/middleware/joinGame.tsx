@@ -9,7 +9,7 @@ export const joinGameHelper = async (gameId: string, playerId: string): Promise<
       if (result.error === 'Game is already full') {
         alert('The game is already full. You cannot join this game.'); // Display alert if game is full
       } else {
-        alert(result.error); // Display any other errors
+        alert(result.error);
       }
       localStorage.removeItem('gameId');
       localStorage.removeItem('playerId');
