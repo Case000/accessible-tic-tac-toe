@@ -37,7 +37,7 @@ I conducted accessibility testing using screen-reader simulations and keyboard-o
 2. Visual prompts like “Your turn” and “Waiting for opponent.”
 
 *Alternatively, video walkthroughs demonstrate accessible interaction for users with visual or motor impairments.*
-
+https://youtu.be/fZrepYa41Fc
 ---
 
 ## 3. API Specifications

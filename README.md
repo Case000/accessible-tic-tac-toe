@@ -9,6 +9,9 @@ Accessible Tic-Tac-Toe is a web-based multiplayer game crafted with inclusivity 
 - **Multiplayer Session Management**: An API-driven backend supporting game session creation, player joining, move updates, and viewing past games.
 - **WCAG Compliance**: Designed with color contrast, focus indicators, and live region alerts for an accessible and inclusive gaming experience.
 
+## Video Demo
+https://youtu.be/fZrepYa41Fc
+
 ## Documentation
 For detailed documentation, including setup, accessibility considerations, API specifications, and infrastructure design, please refer to the [Documentation](./DOCUMENTATION.md).
 
