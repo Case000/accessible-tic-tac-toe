@@ -24,6 +24,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const announceTimeout = useRef<number | null>(null);
   const [lastMove, setLastMove] = useState<string | null>(null);
   const [previousBoard, setPreviousBoard] = useState<string[][]>(board);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
 
   // Generate or retrieve player ID
   const [playerId] = useState<string>(() => {
@@ -34,11 +35,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
     return storedPlayerId;
   });
-  
+
   const joinCurrentGame = async () => {
     if (joinedRef.current) return;
     joinedRef.current = true;
-    
+
     const role = await joinGameHelper(gameId, playerId);
     if (role) {
       setPlayerRole(role);
@@ -46,13 +47,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
       joinedRef.current = false;
     }
   };
-  
+
   useEffect(() => {
     if (!playerRole) {
       joinCurrentGame();
     }
   }, [gameId, playerRole]);
-  
+  //When the current player make a move
   const handleCellClick = async (row: number, col: number) => {
     if (playerRole !== currentPlayer) {
       alert("It's not your turn!");
@@ -61,7 +62,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
     try {
       await makeMove(gameId, playerRole!, row, col);
       setLastMove(`Row ${row + 1}, Column ${col + 1}`);
-      setPreviousBoard(prevBoard => {
+      setAnnouncement(
+        `You selected Row ${row + 1}, Column ${
+          col + 1
+        }. Waiting for your opponent...`
+      );
+      setPreviousBoard((prevBoard) => {
         const updatedBoard = [...prevBoard];
         updatedBoard[row][col] = playerRole!;
         return updatedBoard;
@@ -71,14 +77,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
       console.error("Invalid move:", error);
     }
   };
-  
+
   const findLastMove = (prevBoard: string[][], currentBoard: string[][]) => {
     for (let row = 0; row < currentBoard.length; row++) {
       for (let col = 0; col < currentBoard[row].length; col++) {
         if (prevBoard[row][col] !== currentBoard[row][col]) {
           return {
             move: `Row ${row + 1}, Column ${col + 1}`,
-            player: currentBoard[row][col]
+            player: currentBoard[row][col],
           };
         }
       }
@@ -95,12 +101,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
         if (updatedGame.status !== gameStatus) {
           setGameStatus(updatedGame.status);
         }
-        // Trigger onUpdate if the board has changed
+        // Trigger onUpdate if the board has changed (Opponent makes a move)
         if (JSON.stringify(updatedGame.board) !== JSON.stringify(board)) {
           // Find and set the last move
           const detectedMove = findLastMove(previousBoard, updatedGame.board);
           if (detectedMove && detectedMove.player !== playerRole) {
             setLastMove(detectedMove.move);
+            // Set announcement based on the Opp last move
+            setAnnouncement(
+              `Your opponent selected ${detectedMove.move}. It's your turn!`
+            );
           }
           onUpdate();
           setPreviousBoard(updatedGame.board);
@@ -135,7 +145,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gameStatus, playerRole]);
 
-
   const updateSelectedCell = (
     rowIndex: number,
     colIndex: number,
@@ -166,7 +175,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
       className="game-board-container"
       aria-label="Tic-Tac-Toe game board. The grid is a 3x3 layout with rows and columns. You are playing as X or O based on your role."
     >
-      <p tabIndex={0} style={{ fontSize: "1rem", color: "#555", marginBottom: "1rem" }}>
+      <p
+        tabIndex={0}
+        style={{ fontSize: "1rem", color: "#555", marginBottom: "1rem" }}
+      >
         This is a 3x3 grid layout. Select an empty cell to make your move. Rows
         and columns are numbered from top to bottom and left to right.
       </p>
@@ -193,31 +205,23 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Turn indicator */}
       {(!gameStatus || gameStatus === "ongoing") && (
         <>
-          <h2 tabIndex={0} aria-live="polite" className={`turn-indicator ${playerRole}`}>
+          <h2
+            tabIndex={0}
+            aria-live="polite"
+            className={`turn-indicator ${playerRole}`}
+          >
             {`You are playing as ${playerRole}`}
           </h2>
 
           {/* Separate live regions for each message */}
           {playerRole === currentPlayer ? (
-            <div
-              tabIndex={0}
-              role="alert"
-              aria-live="polite"
-              className="turn-status your-turn"
-              key="your-turn"
-            >
+            <div tabIndex={0} className="turn-status your-turn" key="your-turn">
               {lastMove
                 ? `Your opponent selected ${lastMove}. It's your turn!`
                 : "It's your turn!"}
             </div>
           ) : (
-            <div
-              tabIndex={0}
-              role="alert"
-              aria-live="polite"
-              className="turn-status waiting"
-              key="waiting"
-            >
+            <div tabIndex={0} className="turn-status waiting" key="waiting">
               {lastMove
                 ? `You selected ${lastMove}. Waiting for your opponent...`
                 : "Waiting for your opponent..."}
@@ -226,9 +230,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </>
       )}
 
-      {/* Aria-live region for announcing the selected cell */}
+      {/* Aria-live region for announcing the selected cell and turn announcements */}
       <div aria-live="assertive" className="sr-only">
         {selectedCell}
+      </div>
+      <div aria-live="assertive" className="sr-only">
+        {announcement}
       </div>
 
       {/* Game board */}
