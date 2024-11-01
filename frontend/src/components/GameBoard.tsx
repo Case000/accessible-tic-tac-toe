@@ -23,6 +23,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [selectedCell, setSelectedCell] = useState<string | null>(null);
   const announceTimeout = useRef<number | null>(null);
   const [lastMove, setLastMove] = useState<string | null>(null);
+  const [previousBoard, setPreviousBoard] = useState<string[][]>(board);
 
   // Generate or retrieve player ID
   const [playerId] = useState<string>(() => {
@@ -33,11 +34,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
     return storedPlayerId;
   });
-
+  
   const joinCurrentGame = async () => {
     if (joinedRef.current) return;
     joinedRef.current = true;
-
+    
     const role = await joinGameHelper(gameId, playerId);
     if (role) {
       setPlayerRole(role);
@@ -45,12 +46,45 @@ const GameBoard: React.FC<GameBoardProps> = ({
       joinedRef.current = false;
     }
   };
-
+  
   useEffect(() => {
     if (!playerRole) {
       joinCurrentGame();
     }
   }, [gameId, playerRole]);
+  
+  const handleCellClick = async (row: number, col: number) => {
+    if (playerRole !== currentPlayer) {
+      alert("It's not your turn!");
+      return;
+    }
+    try {
+      await makeMove(gameId, playerRole!, row, col);
+      setLastMove(`Row ${row + 1}, Column ${col + 1}`);
+      setPreviousBoard(prevBoard => {
+        const updatedBoard = [...prevBoard];
+        updatedBoard[row][col] = playerRole!;
+        return updatedBoard;
+      });
+      onUpdate();
+    } catch (error) {
+      console.error("Invalid move:", error);
+    }
+  };
+  
+  const findLastMove = (prevBoard: string[][], currentBoard: string[][]) => {
+    for (let row = 0; row < currentBoard.length; row++) {
+      for (let col = 0; col < currentBoard[row].length; col++) {
+        if (prevBoard[row][col] !== currentBoard[row][col]) {
+          return {
+            move: `Row ${row + 1}, Column ${col + 1}`,
+            player: currentBoard[row][col]
+          };
+        }
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
@@ -63,7 +97,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
         }
         // Trigger onUpdate if the board has changed
         if (JSON.stringify(updatedGame.board) !== JSON.stringify(board)) {
+          // Find and set the last move
+          const detectedMove = findLastMove(previousBoard, updatedGame.board);
+          if (detectedMove && detectedMove.player !== playerRole) {
+            setLastMove(detectedMove.move);
+          }
           onUpdate();
+          setPreviousBoard(updatedGame.board);
         }
         // Stop polling if the game has ended
         if (updatedGame.status !== "ongoing") {
@@ -95,19 +135,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gameStatus, playerRole]);
 
-  const handleCellClick = async (row: number, col: number) => {
-    if (playerRole !== currentPlayer) {
-      alert("It's not your turn!");
-      return;
-    }
-    try {
-      await makeMove(gameId, playerRole!, row, col);
-      onUpdate();
-      setLastMove(`Row ${row + 1}, Column ${col + 1}`);
-    } catch (error) {
-      console.error("Invalid move:", error);
-    }
-  };
 
   const updateSelectedCell = (
     rowIndex: number,
@@ -139,7 +166,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       className="game-board-container"
       aria-label="Tic-Tac-Toe game board. The grid is a 3x3 layout with rows and columns. You are playing as X or O based on your role."
     >
-      <p style={{ fontSize: "1rem", color: "#555", marginBottom: "1rem" }}>
+      <p tabIndex={0} style={{ fontSize: "1rem", color: "#555", marginBottom: "1rem" }}>
         This is a 3x3 grid layout. Select an empty cell to make your move. Rows
         and columns are numbered from top to bottom and left to right.
       </p>
@@ -166,13 +193,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Turn indicator */}
       {(!gameStatus || gameStatus === "ongoing") && (
         <>
-          <h2 aria-live="polite" className={`turn-indicator ${playerRole}`}>
+          <h2 tabIndex={0} aria-live="polite" className={`turn-indicator ${playerRole}`}>
             {`You are playing as ${playerRole}`}
           </h2>
 
           {/* Separate live regions for each message */}
           {playerRole === currentPlayer ? (
             <div
+              tabIndex={0}
               role="alert"
               aria-live="polite"
               className="turn-status your-turn"
@@ -184,6 +212,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             </div>
           ) : (
             <div
+              tabIndex={0}
               role="alert"
               aria-live="polite"
               className="turn-status waiting"
