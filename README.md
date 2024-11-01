@@ -21,6 +21,7 @@ For detailed documentation, including setup, accessibility considerations, API s
 Ensure the following are installed on your machine:
 - **Node.js** (v14 or higher)
 - **npm** (usually bundled with Node.js)
+- **MySQL** (ensure it is running and accessible)
 
 ### Getting Started in local
 1. Clone the repository:

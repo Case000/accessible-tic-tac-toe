@@ -18,7 +18,7 @@ This web application is designed to accommodate users with the following disabil
    Click the "Create New Game" button on the homepage. The application will generate a unique game ID and add it to the list of available games.
 
 3. **Joining from Another Browser**  
-   Open the application in a new browser window or on another device connected to the same network, select the game session ID, and click to join. Once both players have joined, they are assigned player roles (X or O).
+   Open the application in a new browser window or on another device connected to the same network, refresh the game list if needed, select the game session ID, and click to join. Once both players have joined, they are assigned player roles (X or O).
 
 4. **Playing the Game**  
    Each player can take turns selecting an empty cell on the 3x3 grid. Text prompts and live announcements guide the players through their turns until a player wins or the game ends in a tie.
@@ -33,8 +33,13 @@ I conducted accessibility testing using screen-reader simulations and keyboard-o
 - **Sensory Impairment Simulation**: Color-coded cells for X and O moves and large clickable areas were tested for motor and visual accessibility. Adjusted gap and spacing ensure touch accessibility on mobile devices.
 
 *Example Screenshots:*
-1. The main game board with focus indicators for screen readers.
-2. Visual prompts like “Your turn” and “Waiting for opponent.”
+1. Session screen to create or join a game
+![Game Lobby](assets/image.png)
+2. The main game board with focus indicators for screen readers.
+![Game Board](assets/image-1.png)
+3. Visual prompts like “Your turn” and “Waiting for opponent.”
+![Turn prompts](assets/image-2.png)
+
 
 *Alternatively, video walkthroughs demonstrate accessible interaction for users with visual or motor impairments.*
 https://youtu.be/fZrepYa41Fc
@@ -74,7 +79,21 @@ https://youtu.be/fZrepYa41Fc
 
 ## 4. Summary of Design and Accessibility Considerations
 
-This Tic-Tac-Toe web application emphasizes accessibility by using Aria roles, live regions, and keyboard navigation support. The design leverages simple UI and color contrast to aid users with sensory and cognitive disabilities. Infrastructure-wise, the application uses RESTful APIs for frontend-backend communication, ensuring compatibility across devices. Responsiveness across desktop and mobile views was achieved through CSS media queries and flexible layouts, enabling seamless use on various devices. Accessibility features, including screen-reader support and intuitive focus indicators, were integrated for an inclusive, user-friendly experience.
+This Tic-Tac-Toe web application prioritizes accessibility through comprehensive design choices tailored to users with sensory, cognitive, and motor disabilities. To enhance inclusivity:
+
+- **Aria Roles and Live Regions**: The application uses Aria roles and live regions to provide real-time game updates. Moves made by the opponent are automatically announced via screen readers, allowing users with visual impairments to stay informed on game progress without needing to look at the screen.
+
+- **Keyboard Navigation**: Every interactive element, including instructions, is accessible by tab navigation, enabling users to explore game elements in a structured order. Key game instructions, board cells, and options are all navigable by keyboard alone, and each cell is described by row and column location, allowing easy navigation and spatial understanding.
+
+- **Polling vs. WebSockets**: Polling was chosen over WebSockets due to its simplicity and compatibility across various devices and network conditions. Polling intervals update the game state frequently enough to keep both players’ views synchronized while minimizing server load. This design choice balances accessibility and technical efficiency.
+
+- **Audio Feedback**: When the opponent makes a move, an audio cue and screen reader announcement inform the user, enhancing accessibility for visually impaired players. This immediate feedback creates an engaging experience without requiring the player’s visual attention.
+
+- **UI Simplicity and Contrast**: The interface uses clear, high-contrast colors and large, easily distinguishable buttons, with visual and auditory feedback for each game action. This benefits users with low vision, cognitive disabilities, and motor impairments.
+
+- **Responsive Design**: CSS media queries and flexible layouts adapt the interface to mobile and desktop devices, maintaining a seamless and accessible experience across various screen sizes and orientations.
+
+This application’s infrastructure, featuring RESTful APIs for smooth frontend-backend communication, allows for consistent performance across devices. These design and accessibility considerations combine to make this Tic-Tac-Toe game an inclusive, user-friendly experience suitable for diverse users.
 
 ## 5. Architecture Diagram
 
